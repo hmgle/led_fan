@@ -1,0 +1,7 @@
+*.o
+led_fan
+
+tags
+cscope.in.out
+cscope.out
+cscope.po.out
