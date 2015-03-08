@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <SDL2_gfxPrimitives.h>
 
 struct point_s {
 	double x;
@@ -16,7 +17,7 @@ struct led_s {
 int main(int argc, char **argv)
 {
 	SDL_Window *screen;
-	SDL_Surface *surface;
+	SDL_Renderer *renderer;
 	SDL_Event event;
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -34,11 +35,13 @@ int main(int argc, char **argv)
 				SDL_GetError());
 		exit(1);
 	}
-	surface = SDL_GetWindowSurface(screen);
-	// Fill the surface black
-	SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0x0, 0x0, 0x0));
+	renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_ACCELERATED);
 	// Update the surface
-	SDL_UpdateWindowSurface(screen);
+	// SDL_UpdateWindowSurface(screen);
+
+	/* Clear the screen */
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
 			switch (event.type) {
@@ -51,7 +54,11 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-		// SDL_SetRenderDrawColor();
+
+		filledCircleRGBA(renderer, 100, 200, 50, 255, 255, 100, 255);
+		SDL_RenderPresent(renderer);
+		/* Adjust framerate */
+		SDL_Delay(25);
 	}
 	return 0;
 }

@@ -1,9 +1,6 @@
-SDL2_CFLAGS = $(shell pkg-config sdl2 --cflags)
-SDL2_IMAGE_CFLAGS = $(shell pkg-config SDL2_image --cflags) 
-CFLAGS += -Wall $(SDL2_CFLAGS) $(SDL2_IMAGE_CFLAGS)
-SDL2_LIBS = $(shell pkg-config sdl2 --libs)
-SDL2_IMAGE_LIBS = $(shell pkg-config SDL2_image --libs) 
-LIBS = $(SDL2_LIBS) $(SDL2_IMAGE_LIBS)
+CFLAGS += -Wall $(shell pkg-config --cflags sdl2)
+
+LIBS = $(shell pkg-config --libs sdl2) -lSDL2_gfx
 
 CC ?= gcc
 
