@@ -1,6 +1,6 @@
-CFLAGS += -Wall $(shell pkg-config --cflags sdl2)
+CFLAGS += -O2 -Wall $(shell pkg-config --cflags sdl2)
 
-LIBS = $(shell pkg-config --libs sdl2) -lSDL2_gfx
+LIBS = $(shell pkg-config --libs sdl2) -lSDL2_gfx -lm
 
 CC ?= gcc
 
