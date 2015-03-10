@@ -83,7 +83,12 @@ int main(int argc, char **argv)
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	SDL_Event event;
-	struct led_s *led0 = create_led(320, 240, 50, 1, 0xFFFFFFFF,  0, 551);
+	struct led_s *led[16];
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551);
+	}
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
@@ -107,7 +112,7 @@ int main(int argc, char **argv)
 	/* Clear the screen */
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
-	SDL_setFramerate(&led0->fps_mgr, 200);
+	SDL_setFramerate(&led[0]->fps_mgr, 200);
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
 			switch (event.type) {
@@ -121,10 +126,12 @@ int main(int argc, char **argv)
 			}
 		}
 
-		run_led(renderer, led0);
+		for (i = 0; i < 16; i++) {
+			run_led(renderer, led[i]);
+		}
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
-		SDL_framerateDelay(&led0->fps_mgr);
+		SDL_framerateDelay(&led[0]->fps_mgr);
 		boxRGBA(renderer, 0, 0, 639, 479, 0, 0, 0, 255);
 	}
 	return 0;
