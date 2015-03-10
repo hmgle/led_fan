@@ -8,6 +8,8 @@
 #define PI 3.14159
 #endif
 
+#define N 91.0 /* 扇页数 */
+
 /* Return the UNIX time in microseconds */
 long long ustime(void)
 {
@@ -62,10 +64,18 @@ struct led_s *create_led(int cx, int cy, int r, int w, Uint32 color,
 void run_led(SDL_Renderer *renderer, struct led_s *led)
 {
 	int elapsed_ms = mstime() - led->start_ms;
-	led->start_angle = 2.0 * PI * elapsed_ms / led->period;
-	int x = led->center.x + led->r * cos(led->start_angle);
-	int y = led->center.y + led->r * sin(led->start_angle);
-	filledCircleColor(renderer, x, y, led->w, led->color);
+	int x;
+	int y;
+	double angle = 2.0 * PI * elapsed_ms / led->period + led->start_angle;
+
+	int i;
+	double tmp_angle;
+	for (i = 0; i < N; i++) {
+		tmp_angle = angle + i * 2.0 * PI / N;
+		x = led->center.x + led->r * cos(tmp_angle);
+		y = led->center.y + led->r * sin(tmp_angle);
+		filledCircleColor(renderer, x, y, led->w, led->color);
+	}
 }
 
 int main(int argc, char **argv)
@@ -73,22 +83,7 @@ int main(int argc, char **argv)
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	SDL_Event event;
-	struct led_s *led0 = create_led(320, 240,  50, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led1 = create_led(320, 240,  54, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led2 = create_led(320, 240,  58, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led3 = create_led(320, 240,  62, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led4 = create_led(320, 240,  66, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led5 = create_led(320, 240,  70, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led6 = create_led(320, 240,  74, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led7 = create_led(320, 240,  78, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led8 = create_led(320, 240,  82, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *led9 = create_led(320, 240,  86, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *leda = create_led(320, 240,  90, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *ledb = create_led(320, 240,  94, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *ledc = create_led(320, 240,  98, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *ledd = create_led(320, 240, 102, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *lede = create_led(320, 240, 106, 2, 0xFFFFFFFF, 0, 1151);
-	struct led_s *ledf = create_led(320, 240, 110, 2, 0xFFFFFFFF, 0, 1151);
+	struct led_s *led0 = create_led(320, 240, 50, 1, 0xFFFFFFFF,  0, 551);
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
@@ -127,21 +122,6 @@ int main(int argc, char **argv)
 		}
 
 		run_led(renderer, led0);
-		run_led(renderer, led1);
-		run_led(renderer, led2);
-		run_led(renderer, led3);
-		run_led(renderer, led4);
-		run_led(renderer, led5);
-		run_led(renderer, led6);
-		run_led(renderer, led7);
-		run_led(renderer, led8);
-		run_led(renderer, led9);
-		run_led(renderer, leda);
-		run_led(renderer, ledb);
-		run_led(renderer, ledc);
-		run_led(renderer, ledd);
-		run_led(renderer, lede);
-		run_led(renderer, ledf);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&led0->fps_mgr);
