@@ -4,11 +4,18 @@
 #include <sys/time.h>
 #include <math.h>
 
-#ifndef PI
-#define PI 3.14159
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif
 
+#ifndef PI
+#define PI M_PI
+#endif
+
+#define TAU 6.28318530717958647693
+
 #define N 91.0 /* 扇页数 */
+#define DN 256.0 /* 圆周像素数 */
 
 /* Return the UNIX time in microseconds */
 long long ustime(void)
@@ -66,12 +73,12 @@ void run_led(SDL_Renderer *renderer, struct led_s *led)
 	int elapsed_ms = mstime() - led->start_ms;
 	int x;
 	int y;
-	double angle = 2.0 * PI * elapsed_ms / led->period + led->start_angle;
+	double angle = TAU * elapsed_ms / led->period + led->start_angle;
 
 	int i;
 	double tmp_angle;
 	for (i = 0; i < N; i++) {
-		tmp_angle = angle + i * 2.0 * PI / N;
+		tmp_angle = angle + i * TAU / N;
 		x = led->center.x + led->r * cos(tmp_angle);
 		y = led->center.y + led->r * sin(tmp_angle);
 		filledCircleColor(renderer, x, y, led->w, led->color);
@@ -85,10 +92,6 @@ int main(int argc, char **argv)
 	SDL_Event event;
 	struct led_s *led[16];
 	int i;
-
-	for (i = 0; i < 16; i++) {
-		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551);
-	}
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
@@ -106,12 +109,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_ACCELERATED);
-	// Update the surface
-	// SDL_UpdateWindowSurface(screen);
 
 	/* Clear the screen */
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
+
+	for (i = 0; i < ARRAY_SIZE(led); i++) {
+		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551);
+	}
 	SDL_setFramerate(&led[0]->fps_mgr, 200);
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
@@ -126,7 +131,7 @@ int main(int argc, char **argv)
 			}
 		}
 
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < ARRAY_SIZE(led); i++) {
 			run_led(renderer, led[i]);
 		}
 		SDL_RenderPresent(renderer);
