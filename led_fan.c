@@ -48,11 +48,12 @@ struct led_s {
 	double start_angle;	/* 起始角度 */
 	int period;		/* 旋转周期: ms */
 	long long start_ms;
-	FPSmanager fps_mgr;
+	void (*cb)(struct led_s *led, void *p); /* callback */
 };
 
 struct led_s *create_led(int cx, int cy, int r, int w, Uint32 color,
-			 double st_angle, int period)
+			 double st_angle, int period,
+			 void (*cb)(struct led_s *, void *))
 {
 	struct led_s *led = malloc(sizeof(*led));
 
@@ -64,7 +65,7 @@ struct led_s *create_led(int cx, int cy, int r, int w, Uint32 color,
 	led->start_angle = st_angle;
 	led->period = period;
 	led->start_ms = mstime();
-	SDL_initFramerate(&led->fps_mgr);
+	led->cb = cb;
 	return led;
 }
 
@@ -81,6 +82,8 @@ void run_led(SDL_Renderer *renderer, struct led_s *led)
 		tmp_angle = angle + i * TAU / N;
 		x = led->center.x + led->r * cos(tmp_angle);
 		y = led->center.y + led->r * sin(tmp_angle);
+		if (led->cb)
+			led->cb(led, renderer);
 		filledCircleColor(renderer, x, y, led->w, led->color);
 	}
 }
@@ -90,6 +93,7 @@ int main(int argc, char **argv)
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	SDL_Event event;
+	FPSmanager fps_mgr;
 	struct led_s *led[16];
 	int i;
 
@@ -108,6 +112,7 @@ int main(int argc, char **argv)
 				SDL_GetError());
 		exit(1);
 	}
+	SDL_initFramerate(&fps_mgr);
 	renderer = SDL_CreateRenderer(screen, -1, SDL_RENDERER_ACCELERATED);
 
 	/* Clear the screen */
@@ -115,9 +120,10 @@ int main(int argc, char **argv)
 	SDL_RenderClear(renderer);
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551);
+		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551,
+				    NULL);
 	}
-	SDL_setFramerate(&led[0]->fps_mgr, 200);
+	SDL_setFramerate(&fps_mgr, 200);
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
 			switch (event.type) {
@@ -136,7 +142,7 @@ int main(int argc, char **argv)
 		}
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
-		SDL_framerateDelay(&led[0]->fps_mgr);
+		SDL_framerateDelay(&fps_mgr);
 		boxRGBA(renderer, 0, 0, 639, 479, 0, 0, 0, 255);
 	}
 	return 0;
