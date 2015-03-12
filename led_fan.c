@@ -4,6 +4,8 @@
 #include <sys/time.h>
 #include <math.h>
 
+#include "dotfont.h"
+
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif

@@ -2,6 +2,7 @@
 #define _DOTFONT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 typedef enum {
 	UTF8 = 0,
@@ -15,7 +16,7 @@ struct font_data_s {
 	union {
 		uint8_t utf8[4];
 		uint8_t gbk[2];
-	}
+	};
 	uint8_t *data;
 };
 
