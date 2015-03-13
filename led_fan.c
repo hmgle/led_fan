@@ -3,6 +3,7 @@
 #include <SDL2_framerate.h>
 #include <sys/time.h>
 #include <math.h>
+#include <assert.h>
 
 #include "dotfont.h"
 
@@ -20,7 +21,7 @@
 #define DN 256.0 /* 圆周像素数 */
 
 /* Return the UNIX time in microseconds */
-long long ustime(void)
+static long long ustime(void)
 {
 	struct timeval tv;
 	long long ust;
@@ -32,9 +33,41 @@ long long ustime(void)
 }
 
 /* Return the UNIX time in milliseconds */
-long long mstime(void)
+static long long mstime(void)
 {
 	return ustime()/1000;
+}
+
+struct plane {
+	int w;
+	int h;
+	uint8_t *pixel;
+};
+
+struct plane *create_plane(int w, int h)
+{
+	struct plane *p = malloc(sizeof(*p));
+	p->w = w;
+	p->h = h;
+	/* TODO */
+	p->pixel = calloc(1, w * h);
+	/* p->pixel = calloc(1, (w * h + 7) / 8); */
+	return p;
+}
+
+int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
+{
+	/* TODO */
+	int i, j;
+	uint8_t *data = f->data;
+	assert(f->h == p->h);
+	// for (i = x; i < x + f->w; i++) {
+	for (i = 0; i < f->h; i++) {
+		for (j = 0; j < f->w; j++) {
+			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << j);
+		}
+	}
+	return 0;
 }
 
 struct point_s {
@@ -44,6 +77,7 @@ struct point_s {
 
 struct led_s {
 	struct point_s center;
+	struct point_s currpo; /* current position */
 	int r;
 	int w;
 	Uint32 color;		/* 发光颜色 */
@@ -71,22 +105,76 @@ struct led_s *create_led(int cx, int cy, int r, int w, Uint32 color,
 	return led;
 }
 
-void run_led(SDL_Renderer *renderer, struct led_s *led)
+struct rend_pl_s {
+	SDL_Renderer *renderer;
+	struct plane *pl;
+};
+
+void disp_font(struct led_s *led, void *p)
+{
+	struct rend_pl_s *r_p = p;
+	SDL_Renderer *renderer = r_p->renderer;
+	struct plane *pl = r_p->pl;
+
+	int x = led->currpo.x;
+	int y = led->currpo.y;
+
+	if (pl->pixel[y * pl->w + x] == 1) {
+		filledCircleColor(renderer, x, y, led->w, 0xAAAAAAFF);
+	} else {
+		// filledCircleColor(renderer, x, y, led->w, 0x3A3A3AFF);
+	}
+}
+
+void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 {
 	int elapsed_ms = mstime() - led->start_ms;
-	int x;
-	int y;
 	double angle = TAU * elapsed_ms / led->period + led->start_angle;
 
 	int i;
 	double tmp_angle;
+	struct rend_pl_s r_p = {renderer, pl};
 	for (i = 0; i < N; i++) {
 		tmp_angle = angle + i * TAU / N;
-		x = led->center.x + led->r * cos(tmp_angle);
-		y = led->center.y + led->r * sin(tmp_angle);
+		led->currpo.x = led->center.x + led->r * cos(tmp_angle);
+		led->currpo.y = led->center.y + led->r * sin(tmp_angle);
+	// 	filledCircleColor(renderer, led->currpo.x, led->currpo.y,
+	// 			  led->w, led->color);
 		if (led->cb)
-			led->cb(led, renderer);
-		filledCircleColor(renderer, x, y, led->w, led->color);
+			led->cb(led, &r_p);
+	}
+}
+
+static const char h_font[] = {
+	________,
+	________,
+	XXX_____,
+	_XX_____,
+	_XX_____,
+	_XX_XX__,
+	_XXX_XX_,
+	_XX__XX_,
+	_XX__XX_,
+	_XX__XX_,
+	_XX__XX_,
+	XXX__XX_,
+	________,
+	________,
+	________,
+	________,
+};
+
+void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
+{
+	int i, j;
+	for (i = 0; i < pl->h; i++) {
+		for (j = 0; j < pl->w; j++) {
+			if (pl->pixel[i * pl->w + j] != 1) {
+				filledCircleColor(renderer, j, i, 1, 0xAAAAAAFF);
+			} else {
+				filledCircleColor(renderer, j, i, 1, 0x0);
+			}
+		}
 	}
 }
 
@@ -98,6 +186,13 @@ int main(int argc, char **argv)
 	FPSmanager fps_mgr;
 	struct led_s *led[16];
 	int i;
+	int w = 640, h = 480;
+	struct plane *pl = create_plane(w, 16);
+	struct font_data_s font;
+	font.h = 16, font.w = 8;
+	font.data = malloc(16);
+	memcpy(font.data, h_font, 16);
+	(void)plane_add_font(pl, 0, 0, &font);
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
@@ -107,8 +202,7 @@ int main(int argc, char **argv)
 	screen = SDL_CreateWindow("led fan",
 				  SDL_WINDOWPOS_UNDEFINED,
 				  SDL_WINDOWPOS_UNDEFINED,
-				  640, 480,
-				  SDL_WINDOW_SHOWN);
+				  w, h, SDL_WINDOW_SHOWN);
 	if (screen == NULL) {
 		fprintf(stderr, "SDL_CreateWindow() failed: %s\n",
 				SDL_GetError());
@@ -122,8 +216,9 @@ int main(int argc, char **argv)
 	SDL_RenderClear(renderer);
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(320, 240, 50 + i*2, 1, 0xFFFFFFFF, 0, 551,
+		led[i] = create_led(w/2, h/2, 50 + i*2, 1, 0xFFFFFFFF, 0, 551,
 				    NULL);
+		led[i]->cb = disp_font;
 	}
 	SDL_setFramerate(&fps_mgr, 200);
 	while (1) {
@@ -139,13 +234,14 @@ int main(int argc, char **argv)
 			}
 		}
 
-		for (i = 0; i < ARRAY_SIZE(led); i++) {
-			run_led(renderer, led[i]);
-		}
+		// for (i = 0; i < ARRAY_SIZE(led); i++) {
+		// 	run_led(renderer, led[i], pl);
+		// }
+		dump_plane(renderer, pl);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&fps_mgr);
-		boxRGBA(renderer, 0, 0, 639, 479, 0, 0, 0, 255);
+		boxRGBA(renderer, 0, 0, w - 1, h - 1, 0, 0, 0, 255);
 	}
 	return 0;
 }
