@@ -64,7 +64,9 @@ int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
 	// for (i = x; i < x + f->w; i++) {
 	for (i = 0; i < f->h; i++) {
 		for (j = 0; j < f->w; j++) {
-			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << j);
+			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (f->w-j));
+			// fprintf(stderr, "%d:%d -  %d\n", i, j, data[i] & (0x1 << j));
+			// (p->pixel)[i*(p->w)+x+j] = 1;
 		}
 	}
 	return 0;
@@ -119,7 +121,7 @@ void disp_font(struct led_s *led, void *p)
 	int x = led->currpo.x;
 	int y = led->currpo.y;
 
-	if (pl->pixel[y * pl->w + x] == 1) {
+	if (pl->pixel[y * pl->w + x] > 0) {
 		filledCircleColor(renderer, x, y, led->w, 0xAAAAAAFF);
 	} else {
 		// filledCircleColor(renderer, x, y, led->w, 0x3A3A3AFF);
@@ -169,10 +171,12 @@ void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 	int i, j;
 	for (i = 0; i < pl->h; i++) {
 		for (j = 0; j < pl->w; j++) {
-			if (pl->pixel[i * pl->w + j] != 1) {
-				filledCircleColor(renderer, j, i, 1, 0xAAAAAAFF);
+			if (pl->pixel[i * pl->w + j] > 0) {
+				// filledCircleColor(renderer, j, i, 1, 0xAAAAAAFF);
+				pixelColor(renderer, j, i, 0xAAAAAAFF);
 			} else {
-				filledCircleColor(renderer, j, i, 1, 0x0);
+				// filledCircleColor(renderer, j, i, 1, 0x0);
+				pixelColor(renderer, j, i, 0x0);
 			}
 		}
 	}
