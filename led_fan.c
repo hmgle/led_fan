@@ -17,7 +17,7 @@
 
 #define TAU 6.28318530717958647693
 
-#define N 291.0 /* 扇页数 */
+#define N 191.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
 /* Return the UNIX time in microseconds */
@@ -123,7 +123,7 @@ void disp_font(struct led_s *led, void *p)
 
 	// int x = (pl->w * (angle / TAU)) % pl->w;
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
-	int y = (led->r - 130) / 2;
+	int y = (led->r - 70) / 2;
 
 	// fprintf(stderr, "%d, x: %d, y: %d\n", __LINE__, x, y);
 	if (pl->pixel[y * pl->w + x] > 0) {
@@ -303,7 +303,7 @@ int main(int argc, char **argv)
 	SDL_RenderClear(renderer);
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(w/2, h/2, 130 + i*2, 1, 0xFFFFFFFF, 0, 551,
+		led[i] = create_led(w/2, h/2, 70 + i*2, 1, 0xFFFFFFFF, 0, 551,
 				    NULL);
 		led[i]->cb = disp_font;
 	}
