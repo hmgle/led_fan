@@ -155,6 +155,24 @@ void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 	}
 }
 
+static const char e_font[] = {
+	________,
+	________,
+	________,
+	________,
+	________,
+	_XXXXX__,
+	XX___XX_,
+	XXXXXXX_,
+	XX______,
+	XX______,
+	XX___XX_,
+	_XXXXX__,
+	________,
+	________,
+	________,
+	________,
+};
 static const char h_font[] = {
 	________,
 	________,
@@ -168,6 +186,44 @@ static const char h_font[] = {
 	_XX__XX_,
 	_XX__XX_,
 	XXX__XX_,
+	________,
+	________,
+	________,
+	________,
+};
+
+static const char l_font[] = {
+	________,
+	________,
+	__XXX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	___XX___,
+	__XXXX__,
+	________,
+	________,
+	________,
+	________,
+};
+
+static const char o_font[] = {
+	________,
+	________,
+	________,
+	________,
+	________,
+	_XXXXX__,
+	XX___XX_,
+	XX___XX_,
+	XX___XX_,
+	XX___XX_,
+	XX___XX_,
+	_XXXXX__,
 	________,
 	________,
 	________,
@@ -200,11 +256,30 @@ int main(int argc, char **argv)
 	int i;
 	int w = 640, h = 480;
 	struct plane *pl = create_plane(w, 16);
-	struct font_data_s font;
-	font.h = 16, font.w = 8;
-	font.data = malloc(16);
-	memcpy(font.data, h_font, 16);
-	(void)plane_add_font(pl, 0, 0, &font);
+	struct font_data_s font_h;
+	struct font_data_s font_e;
+	struct font_data_s font_l;
+	struct font_data_s font_o;
+
+	font_h.h = 16, font_h.w = 8;
+	font_h.data = malloc(16);
+	memcpy(font_h.data, o_font, 16);
+	(void)plane_add_font(pl, 0, 0, &font_h);
+
+	font_e.h = 16, font_e.w = 8;
+	font_e.data = malloc(16);
+	memcpy(font_e.data, l_font, 16);
+	(void)plane_add_font(pl, 16, 0, &font_e);
+
+	font_l.h = 16, font_l.w = 8;
+	font_l.data = malloc(16);
+	memcpy(font_l.data, e_font, 16);
+	(void)plane_add_font(pl, 16*2, 0, &font_l);
+
+	font_o.h = 16, font_o.w = 8;
+	font_o.data = malloc(16);
+	memcpy(font_o.data, h_font, 16);
+	(void)plane_add_font(pl, 16*3, 0, &font_o);
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
