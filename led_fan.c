@@ -17,7 +17,7 @@
 
 #define TAU 6.28318530717958647693
 
-#define N 91.0 /* 扇页数 */
+#define N 291.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
 /* Return the UNIX time in microseconds */
@@ -64,7 +64,8 @@ int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
 	// for (i = x; i < x + f->w; i++) {
 	for (i = 0; i < f->h; i++) {
 		for (j = 0; j < f->w; j++) {
-			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (f->w-j));
+			// (p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (f->w-j));
+			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (j));
 			// fprintf(stderr, "%d:%d -  %d\n", i, j, data[i] & (0x1 << j));
 			// (p->pixel)[i*(p->w)+x+j] = 1;
 		}
@@ -110,6 +111,7 @@ struct led_s *create_led(int cx, int cy, int r, int w, Uint32 color,
 struct rend_pl_s {
 	SDL_Renderer *renderer;
 	struct plane *pl;
+	double angle;
 };
 
 void disp_font(struct led_s *led, void *p)
@@ -117,14 +119,19 @@ void disp_font(struct led_s *led, void *p)
 	struct rend_pl_s *r_p = p;
 	SDL_Renderer *renderer = r_p->renderer;
 	struct plane *pl = r_p->pl;
+	double angle = r_p->angle;
 
-	int x = led->currpo.x;
-	int y = led->currpo.y;
+	// int x = (pl->w * (angle / TAU)) % pl->w;
+	int x = fmod((pl->w * (angle / TAU)), pl->w);
+	int y = (led->r - 130) / 2;
 
+	// fprintf(stderr, "%d, x: %d, y: %d\n", __LINE__, x, y);
 	if (pl->pixel[y * pl->w + x] > 0) {
-		filledCircleColor(renderer, x, y, led->w, 0xAAAAAAFF);
+		filledCircleColor(renderer,
+				  led->currpo.x, led->currpo.y, led->w, 0xAAAAAAFF);
 	} else {
-		// filledCircleColor(renderer, x, y, led->w, 0x3A3A3AFF);
+		filledCircleColor(renderer,
+				  led->currpo.x, led->currpo.y, led->w, 0x3A003AFF);
 	}
 }
 
@@ -135,13 +142,14 @@ void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 
 	int i;
 	double tmp_angle;
-	struct rend_pl_s r_p = {renderer, pl};
+	struct rend_pl_s r_p = {renderer, pl, 0};
 	for (i = 0; i < N; i++) {
 		tmp_angle = angle + i * TAU / N;
 		led->currpo.x = led->center.x + led->r * cos(tmp_angle);
 		led->currpo.y = led->center.y + led->r * sin(tmp_angle);
 	// 	filledCircleColor(renderer, led->currpo.x, led->currpo.y,
 	// 			  led->w, led->color);
+		r_p.angle = tmp_angle;
 		if (led->cb)
 			led->cb(led, &r_p);
 	}
@@ -176,7 +184,7 @@ void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 				pixelColor(renderer, j, i, 0xAAAAAAFF);
 			} else {
 				// filledCircleColor(renderer, j, i, 1, 0x0);
-				pixelColor(renderer, j, i, 0x0);
+				pixelColor(renderer, j, i, 0x3AF003FF);
 			}
 		}
 	}
@@ -220,7 +228,7 @@ int main(int argc, char **argv)
 	SDL_RenderClear(renderer);
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(w/2, h/2, 50 + i*2, 1, 0xFFFFFFFF, 0, 551,
+		led[i] = create_led(w/2, h/2, 130 + i*2, 1, 0xFFFFFFFF, 0, 551,
 				    NULL);
 		led[i]->cb = disp_font;
 	}
@@ -238,10 +246,10 @@ int main(int argc, char **argv)
 			}
 		}
 
-		// for (i = 0; i < ARRAY_SIZE(led); i++) {
-		// 	run_led(renderer, led[i], pl);
-		// }
-		dump_plane(renderer, pl);
+		for (i = 0; i < ARRAY_SIZE(led); i++) {
+			run_led(renderer, led[i], pl);
+		}
+		// dump_plane(renderer, pl);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&fps_mgr);
