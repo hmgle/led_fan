@@ -50,8 +50,7 @@ struct plane *create_plane(int w, int h)
 	p->w = w;
 	p->h = h;
 	/* TODO */
-	p->pixel = calloc(1, w * h);
-	/* p->pixel = calloc(1, (w * h + 7) / 8); */
+	p->pixel = calloc(1, (w * h + 7) / 8);
 	return p;
 }
 
@@ -61,15 +60,12 @@ int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
 	int i, j;
 	uint8_t *data = f->data;
 	assert(f->h == p->h);
-	// for (i = x; i < x + f->w; i++) {
-	for (i = 0; i < f->h; i++) {
-		for (j = 0; j < f->w; j++) {
-			// (p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (f->w-j));
-			(p->pixel)[i*(p->w)+x+j] = data[i] & (0x1 << (j));
-			// fprintf(stderr, "%d:%d -  %d\n", i, j, data[i] & (0x1 << j));
-			// (p->pixel)[i*(p->w)+x+j] = 1;
-		}
-	}
+	for (i = 0; i < f->h; i++)
+		for (j = 0; j < f->w; j++)
+			if ((data[i] & (0x1 << (f->w-j))) > 0)
+				(p->pixel)[(j+x)*(p->h)/8 + i/8] |= (1<<(i%8));
+			else
+				(p->pixel)[(j+x)*(p->h)/8 + i/8] &= ~(1<<(i%8));
 	return 0;
 }
 
@@ -125,8 +121,7 @@ void disp_font(struct led_s *led, void *p)
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (led->r - 70) / 2;
 
-	// fprintf(stderr, "%d, x: %d, y: %d\n", __LINE__, x, y);
-	if (pl->pixel[y * pl->w + x] > 0) {
+	if ((pl->pixel[x*pl->h/8 + y/8] & (y%8)) > 0) {
 		filledCircleColor(renderer,
 				  led->currpo.x, led->currpo.y, led->w, 0xAAAAAAFF);
 	} else {
@@ -173,6 +168,7 @@ static const char e_font[] = {
 	________,
 	________,
 };
+
 static const char h_font[] = {
 	________,
 	________,
@@ -232,14 +228,13 @@ static const char o_font[] = {
 
 void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 {
+	/* TODO */
 	int i, j;
 	for (i = 0; i < pl->h; i++) {
 		for (j = 0; j < pl->w; j++) {
 			if (pl->pixel[i * pl->w + j] > 0) {
-				// filledCircleColor(renderer, j, i, 1, 0xAAAAAAFF);
 				pixelColor(renderer, j, i, 0xAAAAAAFF);
 			} else {
-				// filledCircleColor(renderer, j, i, 1, 0x0);
 				pixelColor(renderer, j, i, 0x3AF003FF);
 			}
 		}
