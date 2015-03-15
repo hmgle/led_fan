@@ -120,7 +120,7 @@ void disp_font(struct led_s *led, void *p)
 	double angle = r_p->angle;
 
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
-	int y = (led->r - 70) / 2;
+	int y = (70+16*4-0.001 - led->r) / 4;
 
 	if ((pl->pixel[x*pl->h/8 + y/8] & (1 << y%8)) > 0) {
 		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
 	struct led_s *led[16];
 	int i;
 	int w = 640, h = 480;
-	struct plane *pl = create_plane(w, 16);
+	struct plane *pl = create_plane(w/2, 16);
 	struct font_data_s font_h;
 	struct font_data_s font_e;
 	struct font_data_s font_l;
@@ -267,22 +267,22 @@ int main(int argc, char **argv)
 
 	font_h.h = 16, font_h.w = 8;
 	font_h.data = malloc(16);
-	memcpy(font_h.data, o_font, 16);
+	memcpy(font_h.data, h_font, 16);
 	(void)plane_add_font(pl, 0, 0, &font_h);
 
 	font_e.h = 16, font_e.w = 8;
 	font_e.data = malloc(16);
-	memcpy(font_e.data, l_font, 16);
+	memcpy(font_e.data, e_font, 16);
 	(void)plane_add_font(pl, 16, 0, &font_e);
 
 	font_l.h = 16, font_l.w = 8;
 	font_l.data = malloc(16);
-	memcpy(font_l.data, e_font, 16);
+	memcpy(font_l.data, l_font, 16);
 	(void)plane_add_font(pl, 16*2, 0, &font_l);
 
 	font_o.h = 16, font_o.w = 8;
 	font_o.data = malloc(16);
-	memcpy(font_o.data, h_font, 16);
+	memcpy(font_o.data, o_font, 16);
 	(void)plane_add_font(pl, 16*3, 0, &font_o);
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
 	SDL_RenderClear(renderer);
 
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(w/2, h/2, 70 + i*2, 1, 0xFFFFFFFF, 0, 551,
+		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF, 0, 551,
 				    NULL);
 		led[i]->cb = disp_font;
 	}
