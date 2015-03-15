@@ -121,7 +121,7 @@ void disp_font(struct led_s *led, void *p)
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (led->r - 70) / 2;
 
-	if ((pl->pixel[x*pl->h/8 + y/8] & (y%8)) > 0) {
+	if ((pl->pixel[x*pl->h/8 + y/8] & (1 << y%8)) > 0) {
 		filledCircleColor(renderer,
 				  led->currpo.x, led->currpo.y, led->w, 0xAAAAAAFF);
 	} else {
