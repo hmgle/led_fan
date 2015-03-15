@@ -20,6 +20,8 @@
 #define N 191.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
+#define BIT(nr) (1 << (nr))
+
 /* Return the UNIX time in microseconds */
 static long long ustime(void)
 {
@@ -117,16 +119,15 @@ void disp_font(struct led_s *led, void *p)
 	struct plane *pl = r_p->pl;
 	double angle = r_p->angle;
 
-	// int x = (pl->w * (angle / TAU)) % pl->w;
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (led->r - 70) / 2;
 
 	if ((pl->pixel[x*pl->h/8 + y/8] & (1 << y%8)) > 0) {
-		filledCircleColor(renderer,
-				  led->currpo.x, led->currpo.y, led->w, 0xAAAAAAFF);
+		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
+				  led->w, 0xAAAAAAFF);
 	} else {
-		filledCircleColor(renderer,
-				  led->currpo.x, led->currpo.y, led->w, 0x3A003AFF);
+		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
+				  led->w, 0x3A003AFF);
 	}
 }
 
@@ -142,8 +143,6 @@ void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 		tmp_angle = angle + i * TAU / N;
 		led->currpo.x = led->center.x + led->r * cos(tmp_angle);
 		led->currpo.y = led->center.y + led->r * sin(tmp_angle);
-	// 	filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-	// 			  led->w, led->color);
 		r_p.angle = tmp_angle;
 		if (led->cb)
 			led->cb(led, &r_p);
@@ -226,13 +225,23 @@ static const char o_font[] = {
 	________,
 };
 
+static int get_plane_bit(const struct plane *pl, int x, int y)
+{
+	int w = pl->w;
+	int h = pl->h;
+	assert(w > 0 && h > 0 && x >= 0 && x < w && y >= 0 && y < h);
+	assert(h % 8 == 0);
+	uint8_t *pixel = pl->pixel;
+	uint8_t *b = &pixel[x*h/8 + y/8];
+	return *b & BIT(y%8);
+}
+
 void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 {
-	/* TODO */
 	int i, j;
 	for (i = 0; i < pl->h; i++) {
 		for (j = 0; j < pl->w; j++) {
-			if (pl->pixel[i * pl->w + j] > 0) {
+			if (get_plane_bit(pl, j, i) > 0) {
 				pixelColor(renderer, j, i, 0xAAAAAAFF);
 			} else {
 				pixelColor(renderer, j, i, 0x3AF003FF);
