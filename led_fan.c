@@ -17,7 +17,7 @@
 
 #define TAU 6.28318530717958647693
 
-#define N 191.0 /* 扇页数 */
+#define N 127.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
 #define BIT(nr) (1 << (nr))
@@ -124,10 +124,10 @@ void disp_font(struct led_s *led, void *p)
 
 	if ((pl->pixel[x*pl->h/8 + y/8] & (1 << y%8)) > 0) {
 		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-				  led->w, 0xAAAAAAFF);
+				  led->w, 0xFFFFFFFF);
 	} else {
 		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-				  led->w, 0x3A003AFF);
+				  led->w, 0x1F00FF00);
 	}
 }
 
