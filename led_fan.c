@@ -184,15 +184,28 @@ int main(int argc, char **argv)
 	int i;
 	int w = 640, h = 480;
 	struct plane *pl = create_plane(w/2, 16);
-	struct font_data_s *font_h = create_ascii_8x16font('h');
-	struct font_data_s *font_e = create_ascii_8x16font('e');;
-	struct font_data_s *font_l = create_ascii_8x16font('l');;
-	struct font_data_s *font_o = create_ascii_8x16font('o');;
+	int font_num = 0;
+	struct font_data_s *font[32];
 
-	(void)plane_add_font(pl, 0, 0, font_h);
-	(void)plane_add_font(pl, 16, 0, font_e);
-	(void)plane_add_font(pl, 16*2, 0, font_l);
-	(void)plane_add_font(pl, 16*3, 0, font_o);
+	if (argc > 1) {
+		const char *font_p = argv[1];
+		while (*font_p) {
+			font[font_num] = create_ascii_8x16font(*font_p);
+			(void)plane_add_font(pl, font_num * 16, 0,
+					     font[font_num]);
+			font_num++;
+			font_p++;
+		}
+	} else {
+		struct font_data_s *font_h = create_ascii_8x16font('h');
+		struct font_data_s *font_e = create_ascii_8x16font('e');;
+		struct font_data_s *font_l = create_ascii_8x16font('l');;
+		struct font_data_s *font_o = create_ascii_8x16font('o');;
+		(void)plane_add_font(pl, 0, 0, font_h);
+		(void)plane_add_font(pl, 16, 0, font_e);
+		(void)plane_add_font(pl, 16*2, 0, font_l);
+		(void)plane_add_font(pl, 16*3, 0, font_o);
+	}
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		fprintf(stderr, "SDL_Init() failed: %s\n", SDL_GetError());
