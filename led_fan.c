@@ -117,7 +117,7 @@ void disp_font(struct led_s *led, void *p)
 	struct rend_pl_s *r_p = p;
 	SDL_Renderer *renderer = r_p->renderer;
 	struct plane *pl = r_p->pl;
-	double angle = r_p->angle;
+	double angle = r_p->angle + PI;
 
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (70+16*4-0.001 - led->r) / 4;
