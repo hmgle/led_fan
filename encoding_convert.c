@@ -11,7 +11,7 @@
 #define GB2312_MEM_SIZE		(7580 * 4)
 #endif
 
-static int
+int
 get_utf8_length(const uint8_t *src)
 {
 	switch (*src) {
