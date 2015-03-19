@@ -4322,7 +4322,7 @@ struct font_data_s {
 	uint8_t *data;
 };
 
-struct font_data_s * create_ascii_8x16font(uint8_t c);
+struct font_data_s *create_ascii_8x16font(uint8_t c);
 
 struct font_data_s *set_font_data(struct font_data_s *font,
 				  int h, int w, encode_type_t t,
