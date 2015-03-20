@@ -63,17 +63,6 @@ get_ascii_8x16font(uint8_t c, uint8_t *buf)
 	return buf;
 }
 
-static uint32_t
-gb2312code_to_fontoffset(uint32_t gb2312code, uint32_t font_w, uint32_t font_h)
-{
-	uint32_t fontoffset;
-
-	fontoffset = (gb2312code % 0x100 - 0xA1) * 94
-		     + (gb2312code / 0x100 - 0xA1);
-	fontoffset *= (font_w * font_h / 8);
-	return fontoffset;
-}
-
 struct font_data_s *
 create_ascii_8x16font(uint8_t c)
 {
