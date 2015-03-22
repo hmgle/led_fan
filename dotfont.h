@@ -4306,7 +4306,7 @@ static const unsigned char __font_bitmap_8x16__[] = {
 
 typedef enum {
 	ASCII = 0,
-	UTF8 = 0,
+	UTF8,
 	GBK,
 } encode_type_t;
 
@@ -4323,6 +4323,8 @@ struct font_data_s {
 };
 
 struct font_data_s *create_ascii_8x16font(uint8_t c);
+
+struct font_data_s *create_utf8_16x16font(const uint8_t *utf8);
 
 struct font_data_s *set_font_data(struct font_data_s *font,
 				  int h, int w, encode_type_t t,

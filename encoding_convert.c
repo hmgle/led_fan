@@ -71,7 +71,8 @@ unicode_to_gb2312(uint16_t unicode, const uint16_t *mem_gb2312, int gb2312_num)
 	for (i = 0; i < gb2312_num; i++)
 		if (mem_gb2312[2 * i] == unicode)
 			return mem_gb2312[2 * i + 1];
-	return -1;
+	assert(0);
+	exit(1);
 }
 
 static uint16_t *MEM_GB2312;

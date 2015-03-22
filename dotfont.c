@@ -1,4 +1,5 @@
 #include "dotfont.h"
+#include "encoding_convert.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -25,6 +26,8 @@ gb2312code_to_fontoffset(uint32_t gb2312code, size_t font_h, size_t font_w)
 	fontoffset *= font_h * font_w / 8;
 	return fontoffset;
 }
+
+static uint8_t *MEM_GB2312_FONT;
 
 uint8_t *
 get_gb2312font(const uint8_t *fontdata, size_t font_h, size_t font_w,
@@ -75,6 +78,27 @@ create_ascii_8x16font(uint8_t c)
 	font->data = malloc(ASCII_H);
 	assert(font->data);
 	(void)get_ascii_8x16font(c, font->data);
+	return font;
+}
+
+struct font_data_s *
+create_utf8_16x16font(const uint8_t *utf8)
+{
+	struct font_data_s *font = malloc(sizeof(*font));
+	uint16_t gb2312;
+	assert(font);
+	font->h = 16;
+	font->w = 16;
+	font->type = UTF8;
+	memcpy(font->utf8, utf8, 4);
+	font->data = malloc(16 * 2);
+	assert(font->data);
+	gb2312 = get_gb2312_by_utf8(utf8);
+	if (MEM_GB2312_FONT == NULL) {
+		MEM_GB2312_FONT = init_fontdata("./gb2312.hzk");
+		assert(MEM_GB2312_FONT);
+	}
+	get_gb2312font(MEM_GB2312_FONT, font->h, font->w, gb2312, font->data);
 	return font;
 }
 
