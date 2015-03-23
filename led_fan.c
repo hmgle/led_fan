@@ -205,12 +205,6 @@ int main(int argc, char **argv)
 				font_num++;
 				font_p += 3;
 			}
-
-			font[font_num] = create_ascii_8x16font(*font_p);
-			(void)plane_add_font(pl, font_num * 16, 0,
-					     font[font_num]);
-			font_num++;
-			font_p++;
 		}
 	} else {
 		struct font_data_s *font_h = create_ascii_8x16font('h');
@@ -266,7 +260,7 @@ int main(int argc, char **argv)
 		for (i = 0; i < ARRAY_SIZE(led); i++) {
 			run_led(renderer, led[i], pl);
 		}
-		// dump_plane(renderer, pl);
+		dump_plane(renderer, pl);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&fps_mgr);
