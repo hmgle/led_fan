@@ -187,8 +187,25 @@ int main(int argc, char **argv)
 	struct font_data_s *font[32];
 
 	if (argc > 1) {
-		const char *font_p = argv[1];
+		const unsigned char *font_p = (const unsigned char *)argv[1];
 		while (*font_p) {
+			if (*font_p < 0x80) {
+				/* ascii */
+				font[font_num] = create_ascii_8x16font(*font_p);
+				(void)plane_add_font(pl, font_num * 16, 0,
+						     font[font_num]);
+				font_num++;
+				font_p++;
+			} else if (*font_p > 0xA0 && *font_p < 0xFF) {
+				/* utf-8 */
+				font[font_num] =
+					create_utf8_16x16font((const uint8_t *)font_p);
+				(void)plane_add_font(pl, font_num * 16, 0,
+						     font[font_num]);
+				font_num++;
+				font_p += 3;
+			}
+
 			font[font_num] = create_ascii_8x16font(*font_p);
 			(void)plane_add_font(pl, font_num * 16, 0,
 					     font[font_num]);
