@@ -63,7 +63,7 @@ int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
 	assert(f->h == p->h);
 	for (i = 0; i < f->h; i++)
 		for (j = 0; j < f->w; j++)
-			if ((data[i*f->w/8 + j/8] & (0x1 << (8 - j%8))) > 0)
+			if ((data[i*f->w/8 + j/8] & (0x1 << (7 - j%8))) > 0)
 				(p->pixel)[(j+x)*(p->h)/8 + i/8] |= (1<<(i%8));
 			else
 				(p->pixel)[(j+x)*(p->h)/8 + i/8] &= ~(1<<(i%8));
