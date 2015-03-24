@@ -18,7 +18,7 @@
 
 #define TAU 6.28318530717958647693
 
-#define N 127.0 /* 扇页数 */
+#define N 227.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
 #define BIT(nr) (1 << (nr))
@@ -127,7 +127,7 @@ void disp_font(struct led_s *led, void *p)
 				  led->w, 0xFFFFFFFF);
 	} else {
 		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-				  led->w, 0x1F00FF00);
+				  led->w, 0x5F00FF00);
 	}
 }
 
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 		for (i = 0; i < ARRAY_SIZE(led); i++) {
 			run_led(renderer, led[i], pl);
 		}
-		dump_plane(renderer, pl);
+		// dump_plane(renderer, pl);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&fps_mgr);
