@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "dotfont.h"
+#include "encoding_convert.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -187,7 +188,7 @@ int main(int argc, char **argv)
 	struct font_data_s *font[32];
 
 	if (argc > 1) {
-		const unsigned char *font_p = (const unsigned char *)argv[1];
+		const uint8_t *font_p = (const uint8_t *)argv[1];
 		while (*font_p) {
 			if (*font_p < 0x80) {
 				/* ascii */
@@ -203,7 +204,7 @@ int main(int argc, char **argv)
 				(void)plane_add_font(pl, font_num * 16, 0,
 						     font[font_num]);
 				font_num++;
-				font_p += 3;
+				font_p += get_utf8_length(font_p);
 			}
 		}
 	} else {
