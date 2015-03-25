@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "dotfont.h"
+#include "plane.h"
 #include "encoding_convert.h"
 
 #ifndef ARRAY_SIZE
@@ -39,24 +40,6 @@ static long long ustime(void)
 static long long mstime(void)
 {
 	return ustime()/1000;
-}
-
-struct plane {
-	int w;
-	int h;
-	Uint32 *pixel;
-};
-
-struct plane *create_plane(int w, int h, Uint32 color)
-{
-	struct plane *p = malloc(sizeof(*p));
-	p->w = w;
-	p->h = h;
-	p->pixel = calloc(1, w * h * sizeof(*p->pixel));
-	int i;
-	for (i = 0; i < w * h; i++)
-		p->pixel[i] = color;
-	return p;
 }
 
 int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
