@@ -1,7 +1,14 @@
-#include "nyancat.h"
 #include "plane.h"
 
 #include <assert.h>
+
+#ifndef FRAME_WIDTH
+#define FRAME_WIDTH  64
+#endif
+
+#ifndef FRAME_HEIGHT
+#define FRAME_HEIGHT 16
+#endif
 
 typedef uint32_t Uint32;
 
@@ -10,13 +17,13 @@ static Uint32 nyancat_colors[256] = {
 	['.']  = 0xFFFFFFFF,	/* White stars */
 	['\''] = 0xFF000000,	/* Black border */
 	['@']  = 0xFFFFFFFF,	/* Tan poptart */
-	['$']  = 0xFF0033AA,	/* Pink poptart */
+	['$']  = 0xFF9999DD,	/* Pink poptart */
 	['-']  = 0xFF0000FF,	/* Red poptart */
 	['>']  = 0xFF0000FF,	/* Red rainbow */
 	['&']  = 0xFF0099FF,	/* Orange rainbow */
 	['+']  = 0xFF00FFFF,	/* Yellow Rainbow */
 	['#']  = 0xFF00FF00,	/* Green rainbow */
-	['=']  = 0xAAAA0000,	/* Light blue rainbow */
+	['=']  = 0xFFCC8000,	/* Light blue rainbow */
 	[';']  = 0xFFFF9900,	/* Dark blue rainbow */
 	['*']  = 0x80808080,	/* Gray cat face */
 	['%']  = 0xFF0033AA,	/* Pink cheeks */

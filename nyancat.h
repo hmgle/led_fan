@@ -277,7 +277,7 @@ const char * frame11[] = {
 ";;;;;;;;;;;;;;;;;;;;'***''''''''''''''''*',,,,,,,,,,,,,,,,,,,,,,",
 ",,;;;;;;;,,,,,,,.;;;'**','**,,,,,,'**''**',,,,,,,,,,,,,,,,,,,,,,"};
 
-const char ** frames[] = {
+const char ** cat_frames[] = {
 	frame0,
 	frame1,
 	frame2,
@@ -292,6 +292,8 @@ const char ** frames[] = {
 	frame11,
 	NULL
 };
+
+struct plane *set_nyancat_plane(struct plane *p, int x, const char **frame);
 
 #define FRAME_WIDTH  64
 #define FRAME_HEIGHT 16
