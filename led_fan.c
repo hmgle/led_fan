@@ -7,6 +7,7 @@
 
 #include "dotfont.h"
 #include "plane.h"
+#include "nyancat.h"
 #include "encoding_convert.h"
 
 #ifndef ARRAY_SIZE
@@ -109,6 +110,30 @@ void disp_font(struct led_s *led, void *p)
 			  led->w, pl->pixel[x*pl->h + y]);
 }
 
+void dump_plane(SDL_Renderer *renderer, const struct plane *pl);
+static struct plane *nyancat_pl[12];
+
+void cat_run_led(SDL_Renderer *renderer, struct led_s *led)
+{
+	int elapsed_ms = mstime() - led->start_ms;
+	double angle = TAU * elapsed_ms / led->period + led->start_angle;
+
+	int i;
+	double tmp_angle;
+	i = elapsed_ms / led->period;
+	struct plane *pl = nyancat_pl[i % 12];
+	struct rend_pl_s r_p = {renderer, pl, 0};
+	for (i = 0; i < N; i++) {
+		tmp_angle = angle + i * TAU / N;
+		led->currpo.x = led->center.x + led->r * cos(tmp_angle);
+		led->currpo.y = led->center.y + led->r * sin(tmp_angle);
+		r_p.angle = tmp_angle;
+		if (led->cb)
+			led->cb(led, &r_p);
+	}
+	dump_plane(renderer, pl);
+}
+
 void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 {
 	int elapsed_ms = mstime() - led->start_ms;
@@ -156,6 +181,7 @@ int main(int argc, char **argv)
 	struct plane *pl = create_plane(w/2, 16, 0x3F00FF00);
 	int font_num = 0;
 	struct font_data_s *font[32];
+	int is_cat = 0;
 
 	if (argc > 1) {
 		const uint8_t *font_p = (const uint8_t *)argv[1];
@@ -178,14 +204,11 @@ int main(int argc, char **argv)
 			}
 		}
 	} else {
-		struct font_data_s *font_h = create_ascii_8x16font('h');
-		struct font_data_s *font_e = create_ascii_8x16font('e');;
-		struct font_data_s *font_l = create_ascii_8x16font('l');;
-		struct font_data_s *font_o = create_ascii_8x16font('o');;
-		(void)plane_add_font(pl, 0, 0, font_h);
-		(void)plane_add_font(pl, 16, 0, font_e);
-		(void)plane_add_font(pl, 16*2, 0, font_l);
-		(void)plane_add_font(pl, 16*3, 0, font_o);
+		is_cat = 1;
+		for (i = 0; i < 12; i++) {
+			nyancat_pl[i] = create_plane(w/2, 16, 0xFFFF0000);
+			(void)set_nyancat_plane(nyancat_pl[i], 48, cat_frames[i]);
+		}
 	}
 
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -209,10 +232,14 @@ int main(int argc, char **argv)
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
+	int period;
+	if (is_cat)
+		period = 97;
+	else
+		period = 551;
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF, 0, 551,
-				    NULL);
-		led[i]->cb = disp_font;
+		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF, 0,
+				    period, disp_font);
 	}
 	SDL_setFramerate(&fps_mgr, 200);
 	while (1) {
@@ -227,11 +254,16 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-
-		for (i = 0; i < ARRAY_SIZE(led); i++) {
-			run_led(renderer, led[i], pl);
+		if (is_cat) {
+			for (i = 0; i < ARRAY_SIZE(led); i++) {
+				cat_run_led(renderer, led[i]);
+			}
+		} else {
+			for (i = 0; i < ARRAY_SIZE(led); i++) {
+				run_led(renderer, led[i], pl);
+			}
 		}
-		dump_plane(renderer, pl);
+		// dump_plane(renderer, pl);
 		SDL_RenderPresent(renderer);
 		/* Adjust framerate */
 		SDL_framerateDelay(&fps_mgr);
