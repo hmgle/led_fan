@@ -44,16 +44,18 @@ static long long mstime(void)
 struct plane {
 	int w;
 	int h;
-	uint8_t *pixel;
+	Uint32 *pixel;
 };
 
-struct plane *create_plane(int w, int h)
+struct plane *create_plane(int w, int h, Uint32 color)
 {
 	struct plane *p = malloc(sizeof(*p));
 	p->w = w;
 	p->h = h;
-	/* TODO */
-	p->pixel = calloc(1, (w * h + 7) / 8);
+	p->pixel = calloc(1, w * h * sizeof(*p->pixel));
+	int i;
+	for (i = 0; i < w * h; i++)
+		p->pixel[i] = color;
 	return p;
 }
 
@@ -65,9 +67,7 @@ int plane_add_font(struct plane *p, int x, int y, struct font_data_s *f)
 	for (i = 0; i < f->h; i++)
 		for (j = 0; j < f->w; j++)
 			if ((data[i*f->w/8 + j/8] & (0x1 << (7 - j%8))) > 0)
-				(p->pixel)[(j+x)*(p->h)/8 + i/8] |= (1<<(i%8));
-			else
-				(p->pixel)[(j+x)*(p->h)/8 + i/8] &= ~(1<<(i%8));
+				(p->pixel)[(j+x)*(p->h) + i] = 0xFFFFFFFF;
 	return 0;
 }
 
@@ -122,13 +122,8 @@ void disp_font(struct led_s *led, void *p)
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (70+16*4-0.001 - led->r) / 4;
 
-	if ((pl->pixel[x*pl->h/8 + y/8] & (1 << y%8)) > 0) {
-		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-				  led->w, 0xFFFFFFFF);
-	} else {
-		filledCircleColor(renderer, led->currpo.x, led->currpo.y,
-				  led->w, 0x1F00FF00);
-	}
+	filledCircleColor(renderer, led->currpo.x, led->currpo.y,
+			  led->w, pl->pixel[x*pl->h + y]);
 }
 
 void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
@@ -149,29 +144,21 @@ void run_led(SDL_Renderer *renderer, struct led_s *led, struct plane *pl)
 	}
 }
 
-static int get_plane_bit(const struct plane *pl, int x, int y)
+static Uint32 get_plane_bit(const struct plane *pl, int x, int y)
 {
 	int w = pl->w;
 	int h = pl->h;
 	assert(w > 0 && h > 0 && x >= 0 && x < w && y >= 0 && y < h);
 	assert(h % 8 == 0);
-	uint8_t *pixel = pl->pixel;
-	uint8_t *b = &pixel[x*h/8 + y/8];
-	return *b & BIT(y%8);
+	return pl->pixel[x*h + y];
 }
 
 void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 {
 	int i, j;
-	for (i = 0; i < pl->h; i++) {
-		for (j = 0; j < pl->w; j++) {
-			if (get_plane_bit(pl, j, i) > 0) {
-				pixelColor(renderer, j, i, 0xAAAAAAFF);
-			} else {
-				pixelColor(renderer, j, i, 0x3AF003FF);
-			}
-		}
-	}
+	for (i = 0; i < pl->h; i++)
+		for (j = 0; j < pl->w; j++)
+			pixelColor(renderer, j, i, get_plane_bit(pl, j, i));
 }
 
 int main(int argc, char **argv)
@@ -183,7 +170,7 @@ int main(int argc, char **argv)
 	struct led_s *led[16];
 	int i;
 	int w = 640, h = 480;
-	struct plane *pl = create_plane(w/2, 16);
+	struct plane *pl = create_plane(w/2, 16, 0x3F00FF00);
 	int font_num = 0;
 	struct font_data_s *font[32];
 
