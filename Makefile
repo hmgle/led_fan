@@ -8,7 +8,7 @@ TARGET = led_fan
 
 all:: $(TARGET)
 
-led_fan: led_fan.o dotfont.o encoding_convert.o
+led_fan: led_fan.o dotfont.o encoding_convert.o plane.o nyancat.o
 	$(CC) $^ -o $@ $(LIBS)
 
 led_fan.o: led_fan.c
