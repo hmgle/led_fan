@@ -3,6 +3,9 @@ language: c
 compiler:
   - gcc
 
-before_install: sudo apt-get install -qq libsdl2-dev libsdl2-gfx-dev
+before_install:
+ - sudo add-apt-repository -y ppa:zoogie/sdl2-snapshots
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq libsdl2-dev libsdl2-gfx-dev
 
 script: make
