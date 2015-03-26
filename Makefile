@@ -1,6 +1,14 @@
-CFLAGS += -O2 -Wall $(shell pkg-config --cflags sdl2 SDL2_gfx)
+SDL2_gfx_INC = $(shell pkg-config --cflags SDL2_gfx 2> /dev/null; echo $$?)
+ifneq ($(SDL2_gfx_INC),0)
+	SDL2_gfx_INC =
+endif
+CFLAGS += -O2 -Wall $(shell pkg-config --cflags sdl2) $(SDL2_gfx_INC)
 
-LIBS = $(shell pkg-config --libs sdl2 SDL2_gfx) -lm
+SDL2_gfx_LIB = $(shell pkg-config --libs SDL2_gfx 2> /dev/null; echo $$?)
+ifneq ($(SDL2_gfx_LIB),0)
+	SDL2_gfx_LIB = -lSDL2_gfx
+endif
+LIBS = $(shell pkg-config --libs sdl2) -lm $(SDL2_gfx_LIB)
 
 CC ?= gcc
 
