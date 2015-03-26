@@ -10,6 +10,12 @@
 - SDL2
 - SDL2_gfx
 
+Debian/Ubuntu 可执行下面命令安装依赖库:
+
+```
+sudo apt-get install libsdl2-dev libsdl2-gfx-dev
+```
+
 ## 编译及运行
 
 ```
