@@ -11,5 +11,6 @@ before_install:
  - tar xf SDL2_gfx-1.0.1.tar.gz
  - cd SDL2_gfx-1.0.1 && ./autogen.sh && ./configure
  - make && sudo make install
+ - cd ..
 
 script: make
