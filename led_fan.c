@@ -20,6 +20,8 @@
 
 #define TAU 6.28318530717958647693
 
+#define PI_3_2 4.71238898038468985769 /* 1.5 x PI */
+
 #define N 227.0 /* 扇页数 */
 #define DN 256.0 /* 圆周像素数 */
 
@@ -101,7 +103,7 @@ void disp_font(struct led_s *led, void *p)
 	struct rend_pl_s *r_p = p;
 	SDL_Renderer *renderer = r_p->renderer;
 	struct plane *pl = r_p->pl;
-	double angle = r_p->angle + PI;
+	double angle = r_p->angle + PI_3_2 - led->start_angle;
 
 	int x = fmod((pl->w * (angle / TAU)), pl->w);
 	int y = (70+16*4-0.001 - led->r) / 4;
@@ -169,6 +171,18 @@ void dump_plane(SDL_Renderer *renderer, const struct plane *pl)
 			pixelColor(renderer, j, i, get_plane_bit(pl, j, i));
 }
 
+static int get_string_len(const uint8_t *string)
+{
+	const uint8_t *p = string;
+	int count = 0;
+
+	while (*p) {
+		count++;
+		p += get_utf8_length(p);
+	}
+	return count;
+}
+
 int main(int argc, char **argv)
 {
 	SDL_Window *screen;
@@ -182,9 +196,12 @@ int main(int argc, char **argv)
 	int font_num = 0;
 	struct font_data_s *font[32];
 	int is_cat = 0;
+	double start_angle = M_PI_2;
 
 	if (argc > 1) {
 		const uint8_t *font_p = (const uint8_t *)argv[1];
+		start_angle =
+			(1-(get_string_len((const uint8_t *)argv[1])-0.5)/20.0) * PI;
 		while (*font_p) {
 			if (*font_p < 0x80) {
 				/* ascii */
@@ -238,8 +255,8 @@ int main(int argc, char **argv)
 	else
 		period = 551;
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
-		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF, 0,
-				    period, disp_font);
+		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF,
+				    start_angle, period, disp_font);
 	}
 	SDL_setFramerate(&fps_mgr, 200);
 	while (1) {
