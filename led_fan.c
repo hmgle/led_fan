@@ -4,6 +4,8 @@
 #include <sys/time.h>
 #include <math.h>
 #include <assert.h>
+#include <unistd.h>
+#include <getopt.h>
 
 #include "dotfont.h"
 #include "plane.h"
@@ -183,25 +185,75 @@ static int get_string_len(const uint8_t *string)
 	return count;
 }
 
+static void usage(char **argv)
+{
+	fprintf(stderr, "Usage: %s [Options] [string]\n"
+			"\n"
+			"Options:\n"
+			" -f --fps  <fps_val>            Frame per Second\n"
+			" -T --period  <Millisecond>     Set Period\n"
+			" -W --width   <pix>             Set Width\n"
+			" -H --height  <pix>             Set Height\n"
+			" -c --bgcolor <color>           Set background color\n"
+			"\n", argv[0]);
+}
+
 int main(int argc, char **argv)
 {
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	SDL_Event event;
 	FPSmanager fps_mgr;
+	Uint32 fps_rate = 200;
 	struct led_s *led[16];
 	int i;
 	int w = 640, h = 480;
-	struct plane *pl = create_plane(w/2, 16, 0x3F00FF00);
+	struct plane *pl;
 	int font_num = 0;
 	struct font_data_s *font[32];
 	int is_cat = 0;
 	double start_angle = M_PI_2;
+	Uint32 bg_color = 0x3F00FF00;
+	int period = 551; /* 旋转周期: ms */
+	int opt, index;
 
-	if (argc > 1) {
-		const uint8_t *font_p = (const uint8_t *)argv[1];
+	static struct option long_opts[] = {
+		{"help",	no_argument,       0, 'h'},
+		{"fps",		required_argument, 0, 'f'},
+		{"period",	required_argument, 0, 'T'},
+		{"width",	required_argument, 0, 'W'},
+		{"height",	required_argument, 0, 'H'},
+		{"bgcolor",	required_argument, 0, 'c'},
+		{0, 0, 0, 0}
+	};
+
+	while ((opt = getopt_long(argc, argv, "hf:T:W:H:c:",
+				  long_opts, &index)) != -1) {
+		switch (opt) {
+		case 'f':
+			fps_rate = atoi(optarg);
+			break;
+		case 'T':
+			period = atoi(optarg);
+			break;
+		case 'W':
+			w = atoi(optarg);
+			break;
+		case 'H':
+			h = atoi(optarg);
+			break;
+		case 0:
+		case 'h':
+		default:
+			usage(argv);
+			exit(0);
+		}
+	}
+	pl = create_plane(w/2, 16, bg_color);
+	if (argc > optind) {
+		const uint8_t *font_p = (const uint8_t *)argv[optind];
 		start_angle =
-			(1-(get_string_len((const uint8_t *)argv[1])-0.5)/20.0) * PI;
+			(1-(get_string_len((const uint8_t *)argv[optind])-0.5)/20.0) * PI;
 		while (*font_p) {
 			if (*font_p < 0x80) {
 				/* ascii */
@@ -249,16 +301,13 @@ int main(int argc, char **argv)
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
-	int period;
 	if (is_cat)
 		period = 97;
-	else
-		period = 551;
 	for (i = 0; i < ARRAY_SIZE(led); i++) {
 		led[i] = create_led(w/2, h/2, 70 + i*4, 1, 0xFFFFFFFF,
 				    start_angle, period, disp_font);
 	}
-	SDL_setFramerate(&fps_mgr, 200);
+	SDL_setFramerate(&fps_mgr, fps_rate);
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
 			switch (event.type) {
