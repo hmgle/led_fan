@@ -15,8 +15,10 @@ TARGET = led_fan
 
 all:: $(TARGET)
 
+dotfont.o: gb2312.hzk
 led_fan: led_fan.o dotfont.o encoding_convert.o plane.o nyancat.o
-	$(CC) $^ -o $@ $(LIBS)
+	$(CC) $^ -Wl,--format=binary -Wl,gb2312.hzk -Wl,--format=default \
+		-o $@ $(LIBS)
 
 led_fan.o: led_fan.c
 	$(CC) -c $(CFLAGS) $^ -o $@
