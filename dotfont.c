@@ -27,7 +27,7 @@ gb2312code_to_fontoffset(uint32_t gb2312code, size_t font_h, size_t font_w)
 	return fontoffset;
 }
 
-static uint8_t *MEM_GB2312_FONT;
+extern uint8_t MEM_GB2312_FONT[] asm("_binary_gb2312_hzk_start");
 
 uint8_t *
 get_gb2312font(const uint8_t *fontdata, size_t font_h, size_t font_w,
@@ -36,27 +36,6 @@ get_gb2312font(const uint8_t *fontdata, size_t font_h, size_t font_w,
 	uint32_t offset = gb2312code_to_fontoffset(gb2312code, font_h, font_w);
 	memcpy(buf, fontdata + offset, font_h * font_w / 8);
 	return buf;
-}
-
-uint8_t *
-init_fontdata(const char *fontpath)
-{
-	int fd = open(fontpath, O_RDONLY);
-	if (fd < 0) {
-		perror("open");
-		return NULL;
-	}
-	struct stat fd_stat;
-	int ret = fstat(fd, &fd_stat);
-	if (ret == -1) {
-		perror("fstat");
-		return NULL;
-	}
-	uint8_t *fontdata_start;
-	fontdata_start = mmap(NULL, (size_t)fd_stat.st_size,
-			      PROT_READ, MAP_PRIVATE, fd, (off_t)0);
-	close(fd);
-	return fontdata_start;
 }
 
 static uint8_t *
@@ -94,10 +73,7 @@ create_utf8_16x16font(const uint8_t *utf8)
 	font->data = malloc(16 * 2);
 	assert(font->data);
 	gb2312 = get_gb2312_by_utf8(utf8);
-	if (MEM_GB2312_FONT == NULL) {
-		MEM_GB2312_FONT = init_fontdata("./gb2312.hzk");
-		assert(MEM_GB2312_FONT);
-	}
+	assert(MEM_GB2312_FONT);
 	get_gb2312font(MEM_GB2312_FONT, font->h, font->w, gb2312, font->data);
 	return font;
 }
