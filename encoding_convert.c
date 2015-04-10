@@ -11,6 +11,8 @@
 #define GB2312_MEM_SIZE		(7580 * 4)
 #endif
 
+extern uint8_t MEM_GB2312_UNICODE[] asm("_binary_GB2312_start");
+
 int
 get_utf8_length(const uint8_t *src)
 {
@@ -90,26 +92,43 @@ hex_ch_to_val(char hex_ch)
 	return -1;
 }
 
-static uint16_t *
-mem_gb2312(const char *gb2312filename, int *gb2312_num)
+/* 非线程安全 */
+static char *
+buf_getline(const char *from, char *to)
 {
-	FILE *gb2312_fp;
+	int ret;
+	static int start_flag = 1;
+	static const char *start;
+	if (start_flag) {
+		start_flag = 0;
+		start = from;
+	}
+	if (start == NULL)
+		return NULL;
+	ret = sscanf(start, "%[^\n]", to);
+	if (ret <= 0)
+		return NULL;
+	start = strchr(start, '\n');
+	if (start != NULL)
+		start++;
+	return to;
+}
+
+static uint16_t *
+mem_gb2312(int *gb2312_num)
+{
 	uint16_t *ptrmem;
 	char *ptrch;
 	char buf[MAX_LINE];
-	int i;
+	int i = 0;
 
-	gb2312_fp = fopen(gb2312filename, "r");
-	if (gb2312_fp == NULL)
-		return NULL;
 	ptrmem = malloc(GB2312_MEM_SIZE);
 	if (!ptrmem) {
 		perror("malloc");
 		exit(1);
 	}
 	memset(ptrmem, 0, GB2312_MEM_SIZE);
-	i = 0;
-	while (fgets(buf, MAX_LINE, gb2312_fp) != NULL) {
+	while (buf_getline((const char *)MEM_GB2312_UNICODE, buf) != NULL) {
 		if (strstr(buf, "/x") == NULL)
 			continue;
 
@@ -136,8 +155,6 @@ mem_gb2312(const char *gb2312filename, int *gb2312_num)
 		i++;
 	} /* i should be 7573 */
 	*gb2312_num = i;
-
-	fclose(gb2312_fp);
 	return ptrmem;
 }
 
@@ -147,7 +164,7 @@ get_gb2312_by_utf8(const uint8_t *utf8)
 	uint8_t unicode[2] = {0};
 	int ret;
 	if (MEM_GB2312 == NULL) {
-		MEM_GB2312 = mem_gb2312("./GB2312", &GB2312_NUM);
+		MEM_GB2312 = mem_gb2312(&GB2312_NUM);
 		if (MEM_GB2312 == NULL) {
 			fprintf(stderr, "mem_gb2312() failed!\n");
 			exit(1);
