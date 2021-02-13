@@ -1,3 +1,5 @@
+UNAME := $(shell uname -s)
+
 HAS_SDL2_gfx = $(shell pkg-config SDL2_gfx 2> /dev/null; echo $$?)
 ifneq ($(HAS_SDL2_gfx),0)
 	SDL2_gfx_INC =
@@ -15,13 +17,19 @@ TARGET = led_fan
 
 all:: $(TARGET)
 
+ifneq ($(UNAME),Darwin)
 dotfont.o: gb2312.hzk
 
 encoding_convert.o: GB2312
+endif
 
 led_fan: led_fan.o dotfont.o encoding_convert.o plane.o nyancat.o
+ifneq ($(UNAME),Darwin)
 	$(CC) $^ -Wl,--format=binary -Wl,GB2312 -Wl,gb2312.hzk -Wl,--format=default \
 		-o $@ $(LIBS)
+else
+	$(CC) $^ -o $@ $(LIBS)
+endif
 
 led_fan.o: led_fan.c
 	$(CC) -c $(CFLAGS) $^ -o $@
