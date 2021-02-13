@@ -16,6 +16,12 @@ Debian/Ubuntu 可执行下面命令安装依赖库:
 sudo apt-get install libsdl2-dev libsdl2-gfx-dev
 ```
 
+macOS 可执行下面命令安装依赖库：
+
+```
+brew install sdl sdl2_gfx
+```
+
 ## 编译及运行
 
 ```

@@ -11,7 +11,9 @@
 #define GB2312_MEM_SIZE		(7580 * 4)
 #endif
 
+#ifndef __APPLE__
 extern uint8_t MEM_GB2312_UNICODE[] asm("_binary_GB2312_start");
+#endif
 
 int
 get_utf8_length(const uint8_t *src)
@@ -92,6 +94,7 @@ hex_ch_to_val(char hex_ch)
 	return -1;
 }
 
+#ifndef __APPLE__
 /* 非线程安全 */
 static char *
 buf_getline(const char *from, char *to)
@@ -157,6 +160,58 @@ mem_gb2312(int *gb2312_num)
 	*gb2312_num = i;
 	return ptrmem;
 }
+#else
+static uint16_t *
+mem_gb2312(const char *gb2312filename, int *gb2312_num)
+{
+	FILE *gb2312_fp;
+	uint16_t *ptrmem;
+	char *ptrch;
+	char buf[MAX_LINE];
+	int i;
+
+	gb2312_fp = fopen(gb2312filename, "r");
+	if (gb2312_fp == NULL)
+		return NULL;
+	ptrmem = malloc(GB2312_MEM_SIZE);
+	if (!ptrmem) {
+		perror("malloc");
+		exit(1);
+	}
+	memset(ptrmem, 0, GB2312_MEM_SIZE);
+	i = 0;
+	while (fgets(buf, MAX_LINE, gb2312_fp) != NULL) {
+		if (strstr(buf, "/x") == NULL)
+			continue;
+
+		/* unicode */
+		ptrch = strchr(buf, 'U');
+		ptrch++;
+		*(ptrmem + i * 2) =  hex_ch_to_val(ptrch[0]) * 0x1000
+				    + hex_ch_to_val(ptrch[1]) * 0x100
+				    + hex_ch_to_val(ptrch[2]) * 0x10
+				    + hex_ch_to_val(ptrch[3]);
+
+		/* gb2312 */
+		ptrch = strstr(ptrch, "/x");
+		ptrch += 2;
+		if (ptrch[2] != '/') { /* 单字节 */
+			*(ptrmem + i * 2 + 1) = hex_ch_to_val(ptrch[1])
+						+ hex_ch_to_val(ptrch[0])*0x10;
+		} else { /* 两个字节 */
+			*(ptrmem + i * 2 + 1) = hex_ch_to_val(ptrch[5]) * 0x100
+						+ hex_ch_to_val(ptrch[4])*0x1000
+						+ hex_ch_to_val(ptrch[1])
+						+ hex_ch_to_val(ptrch[0])*0x10;
+		}
+		i++;
+	} /* i should be 7573 */
+	*gb2312_num = i;
+
+	fclose(gb2312_fp);
+	return ptrmem;
+}
+#endif
 
 uint16_t
 get_gb2312_by_utf8(const uint8_t *utf8)
@@ -164,7 +219,11 @@ get_gb2312_by_utf8(const uint8_t *utf8)
 	uint8_t unicode[2] = {0};
 	int ret;
 	if (MEM_GB2312 == NULL) {
+#ifdef __APPLE__
+		MEM_GB2312 = mem_gb2312("./GB2312", &GB2312_NUM);
+#else
 		MEM_GB2312 = mem_gb2312(&GB2312_NUM);
+#endif
 		if (MEM_GB2312 == NULL) {
 			fprintf(stderr, "mem_gb2312() failed!\n");
 			exit(1);
